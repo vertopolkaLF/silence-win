@@ -11,7 +11,7 @@ namespace Silence_.Services;
 public class SettingsService
 {
     private const string RegistryRunKey = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Run";
-    private const string AppName = "Silence!";
+    private const string AppName = "silence!";
     
     private readonly string _settingsPath;
     private AppSettings _settings;

@@ -109,7 +109,7 @@ namespace Silence_
                     _appWindow.Move(new PointInt32(centerX, centerY));
                 }
 
-                _appWindow.Title = "Silence!";
+                _appWindow.Title = "silence!";
             }
 
             // Calculate max height after content is loaded
@@ -191,8 +191,12 @@ namespace Silence_
 
             _trayIcon.ContextFlyout = _trayMenu;
             _trayIcon.LeftClickCommand = new RelayCommand(() => App.Instance?.ToggleMute());
-            _trayIcon.DoubleClickCommand = new RelayCommand(ShowWindow);
-            _trayIcon.ToolTipText = "Silence! - Microphone ON";
+            _trayIcon.DoubleClickCommand = new RelayCommand(() => 
+            {
+                App.Instance?.ToggleMute(); // Compensate for single click
+                ShowWindow();
+            });
+            _trayIcon.ToolTipText = "silence! - Microphone ON";
 
             UpdateTrayIcon(false);
             _trayIcon.ForceCreate();
@@ -309,7 +313,7 @@ namespace Silence_
             {
                 var icon = CreateMicrophoneIcon(isMuted);
                 _trayIcon.Icon = icon;
-                _trayIcon.ToolTipText = isMuted ? "Silence! - Microphone MUTED" : "Silence! - Microphone ON";
+                _trayIcon.ToolTipText = isMuted ? "silence! - Microphone MUTED" : "silence! - Microphone ON";
             }
             catch
             {
