@@ -135,8 +135,12 @@ public class KeyboardHookService : IDisposable
                     
                     if (_ignoreModifiers)
                     {
-                        // Fire regardless of modifiers
-                        HotkeyPressed?.Invoke();
+                        // Required modifiers must be pressed, extra modifiers are allowed
+                        // e.g., if hotkey is Shift+F23, then Ctrl+Shift+F23 also works, but F23 alone doesn't
+                        if ((currentMods & _targetModifiers) == _targetModifiers)
+                        {
+                            HotkeyPressed?.Invoke();
+                        }
                     }
                     else
                     {

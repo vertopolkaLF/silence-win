@@ -22,13 +22,33 @@ namespace Silence_
         private bool _isMuted;
         private int _recordedKeyCode;
         private ModifierKeys _recordedModifiers;
+        private bool _isHovering;
+        private int _maxWindowHeight = 600; // Will be calculated dynamically
+        private const int MinWindowWidth = 320;
+        private const int TitleBarHeight = 32;
+
+        // Colors for mute button
+        private static readonly Windows.UI.Color MutedColor = Windows.UI.Color.FromArgb(255, 205, 60, 70);      // #CD3C46
+        private static readonly Windows.UI.Color MutedHoverColor = Windows.UI.Color.FromArgb(255, 160, 40, 50); // Darker red
+        private static readonly Windows.UI.Color UnmutedColor = Windows.UI.Color.FromArgb(255, 40, 167, 69);    // #28A745
+        private static readonly Windows.UI.Color UnmutedHoverColor = Windows.UI.Color.FromArgb(255, 30, 130, 55); // Darker green
 
         public bool StartMinimized { get; set; }
+
+        private void SetupTitleBar()
+        {
+            // Extend content into title bar
+            ExtendsContentIntoTitleBar = true;
+            
+            // Set custom title bar element
+            SetTitleBar(AppTitleBar);
+        }
 
         public MainWindow()
         {
             InitializeComponent();
             
+            SetupTitleBar();
             SetupWindow();
             SetupTrayIcon();
             LoadSettings();
@@ -63,41 +83,113 @@ namespace Silence_
 
             if (_appWindow != null)
             {
-                _appWindow.Resize(new SizeInt32(450, 550));
+                const int initialWidth = 400;
+                const int initialHeight = 500; // Temporary, will be adjusted
+                
+                _appWindow.Resize(new SizeInt32(initialWidth, initialHeight));
+                
+                // Allow horizontal resize, limit vertical to content height
+                _appWindow.Changed += (s, e) =>
+                {
+                    if (e.DidSizeChange && _appWindow.Size.Height > _maxWindowHeight)
+                    {
+                        _appWindow.Resize(new SizeInt32(_appWindow.Size.Width, _maxWindowHeight));
+                    }
+                    if (e.DidSizeChange && _appWindow.Size.Width < MinWindowWidth)
+                    {
+                        _appWindow.Resize(new SizeInt32(MinWindowWidth, _appWindow.Size.Height));
+                    }
+                };
                 
                 var displayArea = DisplayArea.GetFromWindowId(windowId, DisplayAreaFallback.Primary);
                 if (displayArea != null)
                 {
-                    var centerX = (displayArea.WorkArea.Width - 450) / 2;
-                    var centerY = (displayArea.WorkArea.Height - 550) / 2;
+                    var centerX = (displayArea.WorkArea.Width - initialWidth) / 2;
+                    var centerY = (displayArea.WorkArea.Height - initialHeight) / 2;
                     _appWindow.Move(new PointInt32(centerX, centerY));
                 }
 
                 _appWindow.Title = "Silence!";
             }
+
+            // Calculate max height after content is loaded
+            if (this.Content is FrameworkElement rootElement)
+            {
+                rootElement.Loaded += (s, e) =>
+                {
+                    CalculateMaxWindowHeight();
+                };
+            }
         }
+
+        private void CalculateMaxWindowHeight()
+        {
+            // Measure the actual content panel, not the ScrollViewer
+            ContentPanel.Measure(new Windows.Foundation.Size(ContentPanel.ActualWidth > 0 ? ContentPanel.ActualWidth : 400, double.PositiveInfinity));
+            var contentHeight = ContentPanel.DesiredSize.Height;
+            
+            // Add title bar height (32px) + window chrome compensation (8px)
+            _maxWindowHeight = (int)Math.Ceiling(contentHeight) + TitleBarHeight + 8;
+            
+            // Resize window to fit content exactly
+            if (_appWindow != null)
+            {
+                var currentWidth = _appWindow.Size.Width;
+                _appWindow.Resize(new SizeInt32(currentWidth, _maxWindowHeight));
+                
+                // Re-center
+                var hwnd = WindowNative.GetWindowHandle(this);
+                var windowId = Win32Interop.GetWindowIdFromWindow(hwnd);
+                var displayArea = DisplayArea.GetFromWindowId(windowId, DisplayAreaFallback.Primary);
+                if (displayArea != null)
+                {
+                    var centerX = (displayArea.WorkArea.Width - currentWidth) / 2;
+                    var centerY = (displayArea.WorkArea.Height - _maxWindowHeight) / 2;
+                    _appWindow.Move(new PointInt32(centerX, centerY));
+                }
+            }
+        }
+
+        private MenuFlyout? _trayMenu;
 
         private void SetupTrayIcon()
         {
-            _trayIcon = new TaskbarIcon();
+            _trayIcon = new TaskbarIcon
+            {
+                NoLeftClickDelay = true // Instant mute on click
+            };
             
-            var menu = new MenuFlyout();
+            // Create context menu items with commands
+            _trayMenu = new MenuFlyout();
             
-            var showItem = new MenuFlyoutItem { Text = "Show Settings" };
-            showItem.Click += (s, e) => ShowWindow();
-            menu.Items.Add(showItem);
+            var showItem = new MenuFlyoutItem 
+            { 
+                Text = "Show Settings",
+                Command = new RelayCommand(ShowWindow)
+            };
+            _trayMenu.Items.Add(showItem);
 
-            var muteItem = new MenuFlyoutItem { Text = "Toggle Mute" };
-            muteItem.Click += (s, e) => App.Instance?.ToggleMute();
-            menu.Items.Add(muteItem);
+            var muteItem = new MenuFlyoutItem 
+            { 
+                Text = "Toggle Mute",
+                Command = new RelayCommand(() => App.Instance?.ToggleMute())
+            };
+            _trayMenu.Items.Add(muteItem);
 
-            menu.Items.Add(new MenuFlyoutSeparator());
+            _trayMenu.Items.Add(new MenuFlyoutSeparator());
 
-            var exitItem = new MenuFlyoutItem { Text = "Exit" };
-            exitItem.Click += (s, e) => App.Instance?.ExitApplication();
-            menu.Items.Add(exitItem);
+            var exitItem = new MenuFlyoutItem 
+            { 
+                Text = "Exit",
+                Command = new RelayCommand(() =>
+                {
+                    _trayIcon?.Dispose();
+                    App.Instance?.ExitApplication();
+                })
+            };
+            _trayMenu.Items.Add(exitItem);
 
-            _trayIcon.ContextFlyout = menu;
+            _trayIcon.ContextFlyout = _trayMenu;
             _trayIcon.LeftClickCommand = new RelayCommand(() => App.Instance?.ToggleMute());
             _trayIcon.DoubleClickCommand = new RelayCommand(ShowWindow);
             _trayIcon.ToolTipText = "Silence! - Microphone ON";
@@ -160,19 +252,53 @@ namespace Silence_
             DispatcherQueue.TryEnqueue(() =>
             {
                 MuteStatusText.Text = isMuted ? "Microphone MUTED" : "Microphone ON";
-                
-                // Button color changes, text stays white
-                if (isMuted)
-                {
-                    MuteButton.Background = new SolidColorBrush(Microsoft.UI.Colors.IndianRed);
-                }
-                else
-                {
-                    MuteButton.Background = new SolidColorBrush(Microsoft.UI.Colors.ForestGreen);
-                }
-
+                UpdateButtonColor();
                 UpdateTrayIcon(isMuted);
             });
+        }
+
+        private void UpdateButtonColor()
+        {
+            var color = _isMuted
+                ? (_isHovering ? MutedHoverColor : MutedColor)
+                : (_isHovering ? UnmutedHoverColor : UnmutedColor);
+            
+            MuteButton.Background = new SolidColorBrush(color);
+        }
+
+        private void MuteButton_PointerEntered(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
+        {
+            _isHovering = true;
+            UpdateButtonColor();
+        }
+
+        private void MuteButton_PointerExited(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
+        {
+            _isHovering = false;
+            UpdateButtonColor();
+        }
+
+        private void ContentScrollViewer_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            UpdateScrollBarVisibility();
+        }
+
+        private void UpdateScrollBarVisibility()
+        {
+            // Measure content to see if it needs scrolling
+            ContentPanel.Measure(new Windows.Foundation.Size(ContentPanel.ActualWidth > 0 ? ContentPanel.ActualWidth : 400, double.PositiveInfinity));
+            var contentHeight = ContentPanel.DesiredSize.Height;
+            var availableHeight = ContentScrollViewer.ActualHeight;
+
+            // Enable scrolling only if content is taller than available space
+            if (contentHeight > availableHeight + 1) // +1 for float precision
+            {
+                ContentScrollViewer.VerticalScrollBarVisibility = ScrollBarVisibility.Auto;
+            }
+            else
+            {
+                ContentScrollViewer.VerticalScrollBarVisibility = ScrollBarVisibility.Disabled;
+            }
         }
 
         private void UpdateTrayIcon(bool isMuted)
@@ -255,9 +381,21 @@ namespace Silence_
 
         #region Event Handlers
 
-        private void MuteButton_Click(object sender, RoutedEventArgs e)
+        private void MuteButton_Click(object sender, Microsoft.UI.Xaml.Input.TappedRoutedEventArgs e)
         {
             App.Instance?.ToggleMute();
+        }
+
+        private void MuteButton_PointerPressed(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
+        {
+            // Slightly darker on press
+            _isHovering = true;
+            UpdateButtonColor();
+        }
+
+        private void MuteButton_PointerReleased(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
+        {
+            UpdateButtonColor();
         }
 
         private void MicrophoneComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
