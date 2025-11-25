@@ -183,8 +183,8 @@ namespace Silence_
             ContentPanel.Measure(new Windows.Foundation.Size(ContentPanel.ActualWidth > 0 ? ContentPanel.ActualWidth : 400, double.PositiveInfinity));
             var contentHeight = ContentPanel.DesiredSize.Height;
             
-            // Add title bar height (32px) + window chrome compensation (8px)
-            _maxWindowHeight = (int)Math.Ceiling(contentHeight) + TitleBarHeight + 8;
+            // Add title bar height (32px) + window chrome compensation (16px for Win10 compatibility)
+            _maxWindowHeight = (int)Math.Ceiling(contentHeight) + TitleBarHeight + 12;
             
             // Resize window to fit content exactly
             if (_appWindow != null)

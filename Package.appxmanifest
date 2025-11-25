@@ -24,7 +24,7 @@
   <Resources>
     <Resource Language="x-generate"/>
   </Resources>
-a
+
   <Applications>
     <Application Id="App"
       Executable="$targetnametoken$.exe"
@@ -40,8 +40,4 @@ a
       </uap:VisualElements>
     </Application>
   </Applications>
-
-  <Capabilities>
-    <rescap:Capability Name="runFullTrust" />
-  </Capabilities>
 </Package>
