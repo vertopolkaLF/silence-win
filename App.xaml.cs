@@ -50,9 +50,13 @@ namespace Silence_
         {
             _window = new MainWindow();
             
-            if (_startMinimized || _settingsService!.Settings.StartMinimized)
+            var shouldStartMinimized = _startMinimized || _settingsService!.Settings.StartMinimized;
+            
+            if (shouldStartMinimized)
             {
                 _window.StartMinimized = true;
+                // Hide window BEFORE activation to prevent flash
+                _window.HideBeforeActivation();
             }
             
             _window.Activate();

@@ -1,4 +1,4 @@
-# Silence! - Microphone Mute Control
+# silence! - Microphone Mute Control
 
 Quick and easy microphone mute control for Windows.
 
@@ -13,7 +13,7 @@ Quick and easy microphone mute control for Windows.
 ## Installation
 
 1. Extract the ZIP archive to any folder (e.g., `C:\Program Files\Silence`)
-2. Run `Silence!.exe`
+2. Run `silence!.exe`
 3. (Optional) Enable "Start with Windows" in settings
 
 ## Usage

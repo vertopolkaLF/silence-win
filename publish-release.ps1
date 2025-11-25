@@ -1,6 +1,6 @@
-# Silence! Release Build Script
+# silence! Release Build Script
 
-Write-Host "Building Silence! Release..." -ForegroundColor Cyan
+Write-Host "Building silence! Release..." -ForegroundColor Cyan
 
 # Clean previous builds
 Write-Host "`nCleaning previous builds..." -ForegroundColor Yellow
@@ -48,7 +48,7 @@ if ($LASTEXITCODE -eq 0) {
     Write-Host "ZIP size: $([math]::Round($size, 2)) MB" -ForegroundColor Cyan
     Write-Host "`nTo distribute:" -ForegroundColor Yellow
     Write-Host "  1. Share the ZIP file" -ForegroundColor White
-    Write-Host "  2. Users extract and run Silence!.exe" -ForegroundColor White
+    Write-Host "  2. Users extract and run silence!.exe" -ForegroundColor White
     Write-Host "  3. No installation required!" -ForegroundColor White
     
 } else {

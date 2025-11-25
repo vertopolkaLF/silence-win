@@ -73,11 +73,24 @@ namespace Silence_
         private bool _firstActivation = true;
         private void MainWindow_Activated(object sender, WindowActivatedEventArgs args)
         {
-            if (_firstActivation && StartMinimized)
+            if (_firstActivation)
             {
                 _firstActivation = false;
-                HideToTray();
+                if (StartMinimized)
+                {
+                    // Already hidden in HideBeforeActivation, just ensure it stays hidden
+                    HideToTray();
+                }
             }
+        }
+
+        /// <summary>
+        /// Hide window before activation to prevent flash
+        /// </summary>
+        public void HideBeforeActivation()
+        {
+            var hwnd = WindowNative.GetWindowHandle(this);
+            ShowWindow(hwnd, SW_HIDE);
         }
 
         private void SetupWindow()
@@ -597,6 +610,11 @@ namespace Silence_
 
         [DllImport("user32.dll")]
         private static extern bool SetForegroundWindow(IntPtr hWnd);
+
+        [DllImport("user32.dll")]
+        private static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+        
+        private const int SW_HIDE = 0;
 
         #region Event Handlers
 
