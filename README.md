@@ -2,7 +2,7 @@
   <img src="Assets/app.png" alt="Silence! Logo" width="128" height="128">
 </p>
 
-<h1 align="center">Silence!</h1>
+<h1 align="center">silence!</h1>
 
 <p align="center">
   <b>A simple, lightweight microphone mute toggle for Windows with global hotkey support</b>
@@ -21,11 +21,9 @@
 - **Global Hotkey** — Mute/unmute your microphone from anywhere using a customizable keyboard shortcut
 - **System Tray** — Lives quietly in your system tray with a color-coded icon (🟢 unmuted / 🔴 muted)
 - **Quick Toggle** — Single click on the tray icon to toggle mute state
-- **Multiple Microphones** — Select which microphone to control
 - **Modifier Support** — Use complex hotkeys like `Ctrl + Alt + M` or simple ones like `F13`
 - **Flexible Matching** — Option to ignore additional modifiers (e.g., hotkey `Shift + F23` also fires on `Ctrl + Shift + F23`)
 - **Auto-Start** — Optionally launch with Windows
-- **Start Minimized** — Start directly to system tray
 - **Modern UI** — Mica/Acrylic backdrop, smooth animations, native Windows 10/11 look
 - **Portable** — No MSIX installer required, just extract and run
 
@@ -61,46 +59,6 @@ dotnet publish -c Release -r win-x64 --self-contained
 ```
 
 The output will be in `bin\Release\net8.0-windows10.0.19041.0\win-x64\publish\`
-
-## 🎮 Usage
-
-### Basic Controls
-
-| Action | How to |
-|--------|--------|
-| Toggle mute | Press your configured hotkey (default: `F23`) |
-| Toggle mute | Left-click tray icon |
-| Open settings | Double-click tray icon or right-click → "Show Settings" |
-| Exit | Right-click tray icon → "Exit" |
-
-### Setting a Hotkey
-
-1. Click the **Record** button
-2. Press your desired key combination (e.g., `Ctrl + Shift + M`)
-3. The hotkey is saved automatically
-
-**Tip:** Keys like `F13`-`F24` are great for hotkeys since they're rarely used by other applications. Many gaming keyboards have programmable keys that can send these codes.
-
-### Ignore Modifiers Option
-
-When enabled, your hotkey will fire even if additional modifiers are pressed. For example:
-- Hotkey: `Shift + F23`
-- With "Ignore modifiers" ON: `Ctrl + Shift + F23` will also trigger the mute toggle
-- With "Ignore modifiers" OFF: Only exact `Shift + F23` works
-
-## ⚙️ System Requirements
-
-- Windows 10 version 1809 (build 17763) or later
-- Windows 11 supported with Mica backdrop
-- x64 architecture (ARM64 build available)
-- ~50 MB disk space
-
-## 🔧 Tech Stack
-
-- [WinUI 3](https://learn.microsoft.com/en-us/windows/apps/winui/winui3/) — Modern Windows UI framework
-- [Windows App SDK](https://learn.microsoft.com/en-us/windows/apps/windows-app-sdk/) — Windows platform APIs
-- [NAudio](https://github.com/naudio/NAudio) — Audio device management via Windows Core Audio API
-- [H.NotifyIcon](https://github.com/HavenDV/H.NotifyIcon) — System tray integration for WinUI
 
 ## 📝 License
 
