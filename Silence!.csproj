@@ -13,10 +13,15 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
     
-    <!-- App Version - update this for releases (Major.Minor format, e.g., 1.0, 1.1) -->
+    <!-- 
+      App Version - THE ONLY PLACE TO UPDATE FOR RELEASES!
+      Use Major.Minor format (e.g., 1.0, 1.1, 2.0)
+      AssemblyVersion and FileVersion are auto-generated from this.
+      UpdateService.CurrentVersion reads from assembly, installer scripts read from here.
+    -->
     <Version>1.1</Version>
-    <AssemblyVersion>1.0.0.0</AssemblyVersion>
-    <FileVersion>1.0.0.0</FileVersion>
+    <AssemblyVersion>$(Version).0.0</AssemblyVersion>
+    <FileVersion>$(Version).0.0</FileVersion>
     
     <!-- Unpackaged deployment - no MSIX bullshit -->
     <EnableMsixTooling>false</EnableMsixTooling>

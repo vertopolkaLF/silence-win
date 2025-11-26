@@ -1,9 +1,10 @@
 ; Inno Setup Script for silence! - x64 version
-; Compile with: iscc /DMyAppVersion=1.1 silence-x64.iss
+; Version is auto-injected from .csproj via build-installers.ps1
+; Manual build: iscc /DMyAppVersion=X.X silence-x64.iss
 
 #define MyAppName "silence!"
 #ifndef MyAppVersion
-  #define MyAppVersion "1.1"
+  #define MyAppVersion "0.0"  ; Fallback only - use build-installers.ps1!
 #endif
 #define MyAppPublisher "vertopolkaLF"
 #define MyAppURL "https://github.com/vertopolkaLF/silence"
