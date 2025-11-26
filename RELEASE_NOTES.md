@@ -1,3 +1,38 @@
+# 🎤 silence! v1.2 — Sound Feedback
+
+> **Now you can hear when you mute.**
+
+## ✨ What's New in v1.2
+
+### 🔊 Sound Feedback System
+
+- **Audio Feedback on Toggle** — Hear a sound when you mute or unmute. Never wonder "did it work?" again.
+
+- **8 Preloaded Sounds** — Choose from 8-Bit, Blob, Digital, Discord, Pop, Punchy, Sci-Fi, or Vibrant. Something for every taste.
+
+- **Custom Sounds** — Don't like our sounds? Add your own! Supports MP3, WAV, FLAC, OGG, M4A, and WMA.
+
+- **Separate Mute/Unmute Sounds** — Set different sounds for mute and unmute actions. Know your state by ear.
+
+- **Volume Control** — Slider to adjust sound volume. Keep it subtle or make it loud.
+
+- **Preview Sounds** — Test sounds before selecting them with the play button.
+
+## 🔧 Technical Changes
+
+- New `SoundService` using NAudio for playback (no media control integration)
+- Sounds stored in `%LOCALAPPDATA%\silence\sounds\`
+- Volume and sound preferences persist in settings
+
+---
+
+<p align="center">
+  <b>Click. Hear. Know.</b>
+</p>
+
+---
+---
+
 # 🎤 silence! v1.1 — Auto-Updates & Navigation Tabs
 
 > **Now with automatic updates and a fresh new look.**
