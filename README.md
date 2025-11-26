@@ -28,10 +28,7 @@
 - **Portable** — No MSIX installer required, just extract and run
 
 ## 📸 Screenshot
-
-<p align="center">
-  <i>Settings window with microphone selection and hotkey configuration</i>
-</p>
+<img width="564" height="471" alt="image" src="https://github.com/user-attachments/assets/4d5750a7-1c86-4393-9e55-a181b1186876" />
 
 ## 🚀 Installation
 
