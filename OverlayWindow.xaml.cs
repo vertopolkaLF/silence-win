@@ -24,11 +24,11 @@ public sealed partial class OverlayWindow : Window
     
     private bool _isPositioning = false;
     private bool _isDragging = false;
-    private Windows.Foundation.Point _dragStartPoint;
-    private PointInt32 _windowStartPosition;
+    private POINT _dragCursorOffset; // Cursor offset from window top-left when drag started
     
-    // Snap threshold in pixels
-    private const int SnapThreshold = 30;
+    // Magnetic snap configuration
+    private const double MagneticRange = 60; // Range where magnetic effect starts (pixels)
+    private const double SnapThreshold = 8; // Distance to fully snap to axis
     
     // Window dimensions - fit icon only (48x48)
     private const int OverlayWidth = 48;
@@ -418,44 +418,83 @@ public sealed partial class OverlayWindow : Window
         _isDragging = true;
         if (sender is UIElement element)
         {
-            _dragStartPoint = e.GetCurrentPoint(element).Position;
             element.CapturePointer(e.Pointer);
         }
-        _windowStartPosition = _appWindow?.Position ?? new PointInt32(0, 0);
+        
+        // Get absolute cursor position and calculate offset from window top-left
+        GetCursorPos(out POINT cursorPos);
+        var windowPos = _appWindow?.Position ?? new PointInt32(0, 0);
+        _dragCursorOffset = new POINT 
+        { 
+            X = cursorPos.X - windowPos.X, 
+            Y = cursorPos.Y - windowPos.Y 
+        };
+        
         e.Handled = true;
     }
 
     private void RootGrid_PointerMoved(object sender, PointerRoutedEventArgs e)
     {
-        if (!_isDragging || _appWindow == null || sender is not UIElement element) return;
+        if (!_isDragging || _appWindow == null) return;
 
-        var currentPoint = e.GetCurrentPoint(element).Position;
-        var deltaX = (int)(currentPoint.X - _dragStartPoint.X);
-        var deltaY = (int)(currentPoint.Y - _dragStartPoint.Y);
+        // Get absolute cursor position (screen coordinates)
+        GetCursorPos(out POINT cursorPos);
+        
+        // Base position = cursor minus the offset we saved when drag started
+        // This makes the window follow cursor exactly
+        double baseX = cursorPos.X - _dragCursorOffset.X;
+        double baseY = cursorPos.Y - _dragCursorOffset.Y;
 
-        var newX = _windowStartPosition.X + deltaX;
-        var newY = _windowStartPosition.Y + deltaY;
-
-        // Apply magnetic snapping to center
+        // Get work area and calculate center axes
         var settings = App.Instance?.SettingsService.Settings;
         var workArea = GetTargetScreenWorkArea(settings?.OverlayScreenId ?? "PRIMARY");
         
-        int centerX = workArea.X + (workArea.Width - OverlayWidth) / 2;
-        int centerY = workArea.Y + (workArea.Height - OverlayHeight) / 2;
+        double centerX = workArea.X + (workArea.Width - OverlayWidth) / 2.0;
+        double centerY = workArea.Y + (workArea.Height - OverlayHeight) / 2.0;
 
-        // Snap to horizontal center
-        if (Math.Abs(newX - centerX) < SnapThreshold)
+        // Calculate distance from center axes
+        double distanceFromCenterX = Math.Abs(baseX - centerX);
+        double distanceFromCenterY = Math.Abs(baseY - centerY);
+
+        double finalX = baseX;
+        double finalY = baseY;
+
+        // Smooth magnetic attraction to horizontal center axis
+        if (distanceFromCenterX < MagneticRange)
         {
-            newX = centerX;
+            if (distanceFromCenterX < SnapThreshold)
+            {
+                // Full snap when very close
+                finalX = centerX;
+            }
+            else
+            {
+                // Smooth interpolation: strength increases as we get closer to axis
+                // Using cubic easing for smoother feel
+                double t = 1.0 - (distanceFromCenterX / MagneticRange);
+                double strength = t * t * t; // Cubic easing
+                finalX = baseX + (centerX - baseX) * strength;
+            }
         }
 
-        // Snap to vertical center
-        if (Math.Abs(newY - centerY) < SnapThreshold)
+        // Smooth magnetic attraction to vertical center axis
+        if (distanceFromCenterY < MagneticRange)
         {
-            newY = centerY;
+            if (distanceFromCenterY < SnapThreshold)
+            {
+                // Full snap when very close
+                finalY = centerY;
+            }
+            else
+            {
+                // Smooth interpolation
+                double t = 1.0 - (distanceFromCenterY / MagneticRange);
+                double strength = t * t * t; // Cubic easing
+                finalY = baseY + (centerY - baseY) * strength;
+            }
         }
 
-        _appWindow.Move(new PointInt32(newX, newY));
+        _appWindow.Move(new PointInt32((int)Math.Round(finalX), (int)Math.Round(finalY)));
         e.Handled = true;
     }
 
@@ -519,6 +558,16 @@ public sealed partial class OverlayWindow : Window
     private const int DWMWCP_ROUND = 2;
     private const int DWMWCP_ROUNDSMALL = 3;
 
+    [StructLayout(LayoutKind.Sequential)]
+    private struct POINT
+    {
+        public int X;
+        public int Y;
+    }
+    
+    [DllImport("user32.dll")]
+    private static extern bool GetCursorPos(out POINT lpPoint);
+    
     [DllImport("user32.dll")]
     private static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
 

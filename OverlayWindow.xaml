@@ -10,6 +10,7 @@
     <!-- Simple container - window itself is rounded via DWM, semi-transparent to show blur -->
     <Border x:Name="RootGrid"
             Background="#801E1E1E"
+            CornerRadius="8"
             Padding="0"
             Margin="0"
             UseSystemFocusVisuals="False"
