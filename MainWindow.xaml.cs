@@ -369,7 +369,7 @@ namespace silence_
                 if (tag == null || tag == _currentPage) return;
 
                 // Determine slide direction
-                var pageOrder = new[] { "General", "Sounds", "Appearance", "About" };
+                var pageOrder = new[] { "General", "Sounds", "Overlay", "Appearance", "About" };
                 var currentIndex = Array.IndexOf(pageOrder, _currentPage);
                 var newIndex = Array.IndexOf(pageOrder, tag);
                 var effect = newIndex > currentIndex 
@@ -381,6 +381,7 @@ namespace silence_
                     "General" => typeof(GeneralPage),
                     "Sounds" => typeof(SoundsPage),
                     "Appearance" => typeof(AppearancePage),
+                    "Overlay" => typeof(OverlayPage),
                     "About" => typeof(AboutPage),
                     _ => null
                 };

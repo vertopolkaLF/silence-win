@@ -19,7 +19,7 @@
       AssemblyVersion and FileVersion are auto-generated from this.
       UpdateService.CurrentVersion reads from assembly, installer scripts read from here.
     -->
-    <Version>1.2</Version>
+    <Version>1.3</Version>
     <AssemblyVersion>$(Version).0.0</AssemblyVersion>
     <FileVersion>$(Version).0.0</FileVersion>
     

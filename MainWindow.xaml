@@ -67,6 +67,11 @@
                         <FontIcon Glyph="&#xE767;"/>
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
+                <NavigationViewItem x:Name="OverlayNavItem" Content="Overlay" Tag="Overlay">
+                    <NavigationViewItem.Icon>
+                        <FontIcon Glyph="&#xE78B;"/>
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
                 <NavigationViewItem x:Name="AppearanceNavItem" Content="Appearance" Tag="Appearance">
                     <NavigationViewItem.Icon>
                         <FontIcon Glyph="&#xE790;"/>

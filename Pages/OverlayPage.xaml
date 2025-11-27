@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="silence_.Pages.OverlayPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Background="Transparent">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" 
+                  HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Spacing="24" Margin="24,24,24,24">
+            <TextBlock Text="Overlay" FontSize="24" FontWeight="SemiBold"/>
+            
+            <!-- Enable/Disable Overlay -->
+            <StackPanel Spacing="8">
+                <ToggleSwitch x:Name="OverlayEnabledToggle"
+                              Header="Enable overlay"
+                              OffContent="Overlay disabled"
+                              OnContent="Overlay enabled"
+                              Toggled="OverlayEnabledToggle_Toggled"/>
+                <TextBlock Text="Shows mute status on top of all windows"
+                           Opacity="0.6"
+                           FontSize="12"/>
+            </StackPanel>
+
+            <!-- Visibility Mode -->
+            <StackPanel x:Name="VisibilityModePanel" Spacing="12">
+                <TextBlock Text="Visibility Mode" FontWeight="SemiBold" FontSize="14"/>
+                <RadioButtons x:Name="VisibilityModeSelector" SelectionChanged="VisibilityModeSelector_SelectionChanged">
+                    <RadioButton Content="Always visible" Tag="Always"/>
+                    <RadioButton Content="Visible when muted" Tag="WhenMuted" IsChecked="True"/>
+                    <RadioButton Content="Visible when unmuted" Tag="WhenUnmuted"/>
+                </RadioButtons>
+            </StackPanel>
+
+            <!-- Screen Selection -->
+            <StackPanel x:Name="ScreenSelectionPanel" Spacing="12">
+                <TextBlock Text="Screen" FontWeight="SemiBold" FontSize="14"/>
+                <ComboBox x:Name="ScreenComboBox"
+                          HorizontalAlignment="Stretch"
+                          SelectionChanged="ScreenComboBox_SelectionChanged"
+                          PlaceholderText="Select screen..."/>
+                <TextBlock Text="Select which monitor to display the overlay on"
+                           Opacity="0.6"
+                           FontSize="12"/>
+            </StackPanel>
+
+            <!-- Position -->
+            <StackPanel x:Name="PositionPanel" Spacing="12">
+                <TextBlock Text="Position" FontWeight="SemiBold" FontSize="14"/>
+                <TextBlock x:Name="CurrentPositionText" 
+                           Text="Current: Center, Bottom 20%"
+                           Opacity="0.6"
+                           FontSize="12"/>
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Button x:Name="SetPositionButton"
+                            Content="Set Position"
+                            Click="SetPositionButton_Click"
+                            HorizontalAlignment="Left"/>
+                    <Button x:Name="DonePositionButton"
+                            Content="Done"
+                            Click="DonePositionButton_Click"
+                            Visibility="Collapsed"
+                            Style="{StaticResource AccentButtonStyle}"
+                            HorizontalAlignment="Left"/>
+                </StackPanel>
+                <TextBlock Text="Click to show overlay and drag it to desired position. The overlay will snap to center when close to the middle of the screen. Press ESC or click Done to save."
+                           Opacity="0.6"
+                           FontSize="12"
+                           TextWrapping="Wrap"/>
+            </StackPanel>
+
+            <!-- Preview/Test -->
+            <StackPanel Spacing="12">
+                <TextBlock Text="Preview" FontWeight="SemiBold" FontSize="14"/>
+                <Button x:Name="PreviewOverlayButton"
+                        Content="Preview Overlay"
+                        Click="PreviewOverlayButton_Click"
+                        HorizontalAlignment="Left"/>
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
+</Page>
+

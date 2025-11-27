@@ -9,12 +9,15 @@ namespace silence_
     public partial class App : Application
     {
         private MainWindow? _window;
+        private OverlayWindow? _overlayWindow;
         private MicrophoneService? _microphoneService;
         private KeyboardHookService? _keyboardHookService;
         private SettingsService? _settingsService;
         private UpdateService? _updateService;
         private SoundService? _soundService;
         private bool _startMinimized;
+        private bool _isOverlayPositioning = false;
+        private System.Timers.Timer? _previewTimer;
 
         public static App? Instance { get; private set; }
         public MicrophoneService MicrophoneService => _microphoneService!;
@@ -64,6 +67,9 @@ namespace silence_
         {
             _window = new MainWindow();
             
+            // Initialize overlay window
+            InitializeOverlay();
+            
             var shouldStartMinimized = _startMinimized || _settingsService!.Settings.StartMinimized;
             
             // Only activate window if NOT starting minimized
@@ -78,6 +84,108 @@ namespace silence_
             {
                 _ = CheckForUpdatesOnStartupAsync();
             }
+        }
+        
+        private void InitializeOverlay()
+        {
+            _overlayWindow = new OverlayWindow();
+            
+            // Set initial position
+            var settings = _settingsService?.Settings;
+            if (settings != null)
+            {
+                _overlayWindow.MoveToPosition(
+                    settings.OverlayPositionX, 
+                    settings.OverlayPositionY, 
+                    settings.OverlayScreenId);
+            }
+            
+            // Update overlay visibility based on current state
+            UpdateOverlayVisibility();
+        }
+        
+        public void UpdateOverlayVisibility()
+        {
+            if (_overlayWindow == null || _settingsService == null) return;
+            
+            var settings = _settingsService.Settings;
+            
+            if (!settings.OverlayEnabled)
+            {
+                _overlayWindow.HideOverlay();
+                return;
+            }
+            
+            var isMuted = _microphoneService?.IsMuted() ?? false;
+            bool shouldShow = settings.OverlayVisibilityMode switch
+            {
+                "Always" => true,
+                "WhenMuted" => isMuted,
+                "WhenUnmuted" => !isMuted,
+                _ => isMuted
+            };
+            
+            if (shouldShow || _isOverlayPositioning)
+            {
+                _overlayWindow.UpdateMuteState(isMuted);
+                _overlayWindow.ShowOverlay();
+            }
+            else
+            {
+                _overlayWindow.HideOverlay();
+            }
+        }
+        
+        public void UpdateOverlayPosition()
+        {
+            if (_overlayWindow == null || _settingsService == null) return;
+            
+            var settings = _settingsService.Settings;
+            _overlayWindow.MoveToPosition(
+                settings.OverlayPositionX,
+                settings.OverlayPositionY,
+                settings.OverlayScreenId);
+        }
+        
+        public void StartOverlayPositioning()
+        {
+            if (_overlayWindow == null) return;
+            
+            _isOverlayPositioning = true;
+            _overlayWindow.StartPositioning();
+        }
+        
+        public void StopOverlayPositioning()
+        {
+            if (_overlayWindow == null) return;
+            
+            _isOverlayPositioning = false;
+            _overlayWindow.StopPositioning();
+            UpdateOverlayVisibility();
+        }
+        
+        public void PreviewOverlay()
+        {
+            if (_overlayWindow == null) return;
+            
+            // Show overlay for 3 seconds
+            _overlayWindow.UpdateMuteState(_microphoneService?.IsMuted() ?? false);
+            _overlayWindow.ShowOverlay();
+            
+            // Use timer to hide after preview
+            _previewTimer?.Stop();
+            _previewTimer?.Dispose();
+            _previewTimer = new System.Timers.Timer(3000);
+            _previewTimer.Elapsed += (s, e) =>
+            {
+                _previewTimer?.Stop();
+                _window?.DispatcherQueue.TryEnqueue(() =>
+                {
+                    UpdateOverlayVisibility();
+                });
+            };
+            _previewTimer.AutoReset = false;
+            _previewTimer.Start();
         }
         
         private async Task CheckForUpdatesOnStartupAsync()
@@ -107,6 +215,10 @@ namespace silence_
         {
             var isMuted = _microphoneService?.ToggleMute() ?? false;
             MuteStateChanged?.Invoke(isMuted);
+            
+            // Update overlay
+            _overlayWindow?.UpdateMuteState(isMuted);
+            UpdateOverlayVisibility();
             
             // Play sound feedback
             var settings = _settingsService?.Settings;
@@ -139,6 +251,9 @@ namespace silence_
             _microphoneService?.Dispose();
             _updateService?.Dispose();
             _soundService?.Dispose();
+            _previewTimer?.Stop();
+            _previewTimer?.Dispose();
+            _overlayWindow?.Close();
             _window?.DisposeTrayIcon();
             _window?.Close();
             Environment.Exit(0);

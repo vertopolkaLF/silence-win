@@ -169,6 +169,31 @@ public class SettingsService
         _settings.SoundVolume = Math.Clamp(volume, 0f, 1f);
         SaveSettings();
     }
+    
+    public void UpdateOverlayEnabled(bool enabled)
+    {
+        _settings.OverlayEnabled = enabled;
+        SaveSettings();
+    }
+    
+    public void UpdateOverlayVisibilityMode(string mode)
+    {
+        _settings.OverlayVisibilityMode = mode;
+        SaveSettings();
+    }
+    
+    public void UpdateOverlayScreen(string screenId)
+    {
+        _settings.OverlayScreenId = screenId;
+        SaveSettings();
+    }
+    
+    public void UpdateOverlayPosition(double percentX, double percentY)
+    {
+        _settings.OverlayPositionX = percentX;
+        _settings.OverlayPositionY = percentY;
+        SaveSettings();
+    }
 }
 
 public class AppSettings
@@ -189,4 +214,11 @@ public class AppSettings
     public string? UnmuteSoundPreloaded { get; set; } = "sifi"; // Preloaded sound key
     public string? UnmuteSoundCustomPath { get; set; } // Custom sound file path (takes precedence)
     public float SoundVolume { get; set; } = 0.5f; // Sound volume 0.0 - 1.0
+    
+    // Overlay settings
+    public bool OverlayEnabled { get; set; } = false; // Overlay disabled by default
+    public string OverlayVisibilityMode { get; set; } = "WhenMuted"; // Always, WhenMuted, WhenUnmuted
+    public string OverlayScreenId { get; set; } = "PRIMARY"; // PRIMARY or display ID
+    public double OverlayPositionX { get; set; } = 50; // Position as percentage (0-100), 50 = center
+    public double OverlayPositionY { get; set; } = 80; // Position as percentage (0-100), 80 = bottom 20%
 }
