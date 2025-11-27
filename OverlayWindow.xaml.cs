@@ -273,31 +273,88 @@ public sealed partial class OverlayWindow : Window
 
     private RectInt32 GetTargetScreenWorkArea(string screenId)
     {
-        try
+        // If PRIMARY or empty, use primary monitor
+        if (screenId == "PRIMARY" || string.IsNullOrEmpty(screenId))
         {
-            if (screenId == "PRIMARY" || string.IsNullOrEmpty(screenId))
-            {
-                var primary = DisplayArea.Primary;
-                return primary.WorkArea;
-            }
-
-            // Try to find the specific display
-            var displays = DisplayArea.FindAll();
-            foreach (var display in displays)
-            {
-                if (display.DisplayId.Value.ToString() == screenId)
-                {
-                    return display.WorkArea;
-                }
-            }
-        }
-        catch
-        {
-            // Fallback
+            return GetPrimaryMonitorWorkArea();
         }
 
-        // Fallback to primary
-        return DisplayArea.Primary.WorkArea;
+        // Find monitor by device name using Win32 API
+        RectInt32? foundWorkArea = null;
+        
+        EnumDisplayMonitors(IntPtr.Zero, IntPtr.Zero, (IntPtr hMonitor, IntPtr hdcMonitor, ref RECT lprcMonitor, IntPtr dwData) =>
+        {
+            var mi = new MONITORINFOEX();
+            mi.cbSize = Marshal.SizeOf(mi);
+            if (GetMonitorInfo(hMonitor, ref mi) && mi.szDevice == screenId)
+            {
+                foundWorkArea = new RectInt32(
+                    mi.rcWork.Left,
+                    mi.rcWork.Top,
+                    mi.rcWork.Right - mi.rcWork.Left,
+                    mi.rcWork.Bottom - mi.rcWork.Top
+                );
+                return false; // Stop enumeration
+            }
+            return true;
+        }, IntPtr.Zero);
+
+        return foundWorkArea ?? GetPrimaryMonitorWorkArea();
+    }
+    
+    private RectInt32 GetPrimaryMonitorWorkArea()
+    {
+        RectInt32 primaryWorkArea = new RectInt32(0, 0, 1920, 1080); // Default fallback
+        
+        EnumDisplayMonitors(IntPtr.Zero, IntPtr.Zero, (IntPtr hMonitor, IntPtr hdcMonitor, ref RECT lprcMonitor, IntPtr dwData) =>
+        {
+            var mi = new MONITORINFOEX();
+            mi.cbSize = Marshal.SizeOf(mi);
+            if (GetMonitorInfo(hMonitor, ref mi) && (mi.dwFlags & MONITORINFOF_PRIMARY) != 0)
+            {
+                primaryWorkArea = new RectInt32(
+                    mi.rcWork.Left,
+                    mi.rcWork.Top,
+                    mi.rcWork.Right - mi.rcWork.Left,
+                    mi.rcWork.Bottom - mi.rcWork.Top
+                );
+                return false; // Stop enumeration
+            }
+            return true;
+        }, IntPtr.Zero);
+
+        return primaryWorkArea;
+    }
+    
+    // Monitor enumeration
+    private delegate bool MonitorEnumProc(IntPtr hMonitor, IntPtr hdcMonitor, ref RECT lprcMonitor, IntPtr dwData);
+    
+    [DllImport("user32.dll")]
+    private static extern bool EnumDisplayMonitors(IntPtr hdc, IntPtr lprcClip, MonitorEnumProc lpfnEnum, IntPtr dwData);
+    
+    [DllImport("user32.dll", CharSet = CharSet.Auto)]
+    private static extern bool GetMonitorInfo(IntPtr hMonitor, ref MONITORINFOEX lpmi);
+    
+    private const int MONITORINFOF_PRIMARY = 0x00000001;
+    
+    [StructLayout(LayoutKind.Sequential)]
+    private struct RECT
+    {
+        public int Left;
+        public int Top;
+        public int Right;
+        public int Bottom;
+    }
+    
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)]
+    private struct MONITORINFOEX
+    {
+        public int cbSize;
+        public RECT rcMonitor;
+        public RECT rcWork;
+        public int dwFlags;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
+        public string szDevice;
     }
 
     public void StartPositioning()

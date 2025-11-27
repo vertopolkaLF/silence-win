@@ -4,6 +4,7 @@ using silence_.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using Windows.Graphics;
 
 namespace silence_.Pages;
@@ -47,7 +48,7 @@ public sealed partial class OverlayPage : Page
         _screens.Clear();
         ScreenComboBox.Items.Clear();
 
-        // Add "Primary Screen" option
+        // Add "Primary Screen" option first
         _screens.Add(new ScreenInfo 
         { 
             DisplayName = "Primary Screen", 
@@ -55,18 +56,18 @@ public sealed partial class OverlayPage : Page
             IsPrimary = true
         });
 
-        // Get all display areas
-        var displayAreas = GetAllDisplayAreas();
+        // Get all monitors using Win32 API
+        var monitors = GetAllMonitors();
         int screenIndex = 1;
         
-        foreach (var area in displayAreas)
+        foreach (var monitor in monitors)
         {
             var screenInfo = new ScreenInfo
             {
-                DisplayName = $"Screen {screenIndex} ({area.WorkArea.Width}x{area.WorkArea.Height})",
-                DeviceName = area.DisplayId.Value.ToString(),
-                WorkArea = area.WorkArea,
-                IsPrimary = false
+                DisplayName = $"Screen {screenIndex}: {monitor.DeviceName} ({monitor.WorkArea.Width}x{monitor.WorkArea.Height}){(monitor.IsPrimary ? " - Primary" : "")}",
+                DeviceName = monitor.DeviceName,
+                WorkArea = monitor.WorkArea,
+                IsPrimary = monitor.IsPrimary
             };
             _screens.Add(screenInfo);
             screenIndex++;
@@ -98,22 +99,72 @@ public sealed partial class OverlayPage : Page
         }
     }
 
-    private List<Microsoft.UI.Windowing.DisplayArea> GetAllDisplayAreas()
+    private List<MonitorInfo> GetAllMonitors()
     {
-        var areas = new List<Microsoft.UI.Windowing.DisplayArea>();
+        var monitors = new List<MonitorInfo>();
         
-        try
+        EnumDisplayMonitors(IntPtr.Zero, IntPtr.Zero, (IntPtr hMonitor, IntPtr hdcMonitor, ref RECT lprcMonitor, IntPtr dwData) =>
         {
-            // Get all display areas
-            var displayAreas = Microsoft.UI.Windowing.DisplayArea.FindAll();
-            areas.AddRange(displayAreas);
-        }
-        catch
-        {
-            // Fallback to primary
-        }
+            var mi = new MONITORINFOEX();
+            mi.cbSize = Marshal.SizeOf(mi);
+            if (GetMonitorInfo(hMonitor, ref mi))
+            {
+                monitors.Add(new MonitorInfo
+                {
+                    Handle = hMonitor,
+                    DeviceName = mi.szDevice,
+                    WorkArea = new RectInt32(
+                        mi.rcWork.Left,
+                        mi.rcWork.Top,
+                        mi.rcWork.Right - mi.rcWork.Left,
+                        mi.rcWork.Bottom - mi.rcWork.Top
+                    ),
+                    IsPrimary = (mi.dwFlags & MONITORINFOF_PRIMARY) != 0
+                });
+            }
+            return true;
+        }, IntPtr.Zero);
 
-        return areas;
+        return monitors;
+    }
+    
+    // Win32 API for monitor enumeration
+    private delegate bool MonitorEnumProc(IntPtr hMonitor, IntPtr hdcMonitor, ref RECT lprcMonitor, IntPtr dwData);
+    
+    [DllImport("user32.dll")]
+    private static extern bool EnumDisplayMonitors(IntPtr hdc, IntPtr lprcClip, MonitorEnumProc lpfnEnum, IntPtr dwData);
+    
+    [DllImport("user32.dll", CharSet = CharSet.Auto)]
+    private static extern bool GetMonitorInfo(IntPtr hMonitor, ref MONITORINFOEX lpmi);
+    
+    private const int MONITORINFOF_PRIMARY = 0x00000001;
+    
+    [StructLayout(LayoutKind.Sequential)]
+    private struct RECT
+    {
+        public int Left;
+        public int Top;
+        public int Right;
+        public int Bottom;
+    }
+    
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)]
+    private struct MONITORINFOEX
+    {
+        public int cbSize;
+        public RECT rcMonitor;
+        public RECT rcWork;
+        public int dwFlags;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
+        public string szDevice;
+    }
+    
+    private class MonitorInfo
+    {
+        public IntPtr Handle { get; set; }
+        public string DeviceName { get; set; } = "";
+        public RectInt32 WorkArea { get; set; }
+        public bool IsPrimary { get; set; }
     }
 
     private void UpdatePositionText(AppSettings settings)
