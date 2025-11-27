@@ -15,13 +15,11 @@
     
     <!-- 
       App Version - THE ONLY PLACE TO UPDATE FOR RELEASES!
-      Use Major.Minor format (e.g., 1.0, 1.1, 2.0)
-      AssemblyVersion and FileVersion are auto-generated from this.
+      Use Major.Minor or Major.Minor.Patch format (e.g., 1.3, 1.3.1, 2.0)
+      .NET auto-pads to 4 parts for AssemblyVersion/FileVersion.
       UpdateService.CurrentVersion reads from assembly, installer scripts read from here.
     -->
-    <Version>1.3</Version>
-    <AssemblyVersion>$(Version).0.0</AssemblyVersion>
-    <FileVersion>$(Version).0.0</FileVersion>
+    <Version>1.3.1</Version>
     
     <!-- Unpackaged deployment - no MSIX bullshit -->
     <EnableMsixTooling>false</EnableMsixTooling>
