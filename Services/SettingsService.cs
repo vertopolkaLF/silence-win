@@ -218,6 +218,18 @@ public class SettingsService
         _settings.OverlayShowDuration = Math.Clamp(duration, 0.1, 10.0);
         SaveSettings();
     }
+    
+    public void UpdateOverlayOpacity(int opacity)
+    {
+        _settings.OverlayOpacity = Math.Clamp(opacity, 0, 100);
+        SaveSettings();
+    }
+    
+    public void UpdateOverlayContentOpacity(int opacity)
+    {
+        _settings.OverlayContentOpacity = Math.Clamp(opacity, 20, 100);
+        SaveSettings();
+    }
 }
 
 public class AppSettings
@@ -249,4 +261,6 @@ public class AppSettings
     public string OverlayIconStyle { get; set; } = "Colored"; // Colored, Monochrome
     public string OverlayBackgroundStyle { get; set; } = "Dark"; // Dark, Light
     public double OverlayShowDuration { get; set; } = 2.0; // Duration in seconds for "AfterToggle" mode (0.1 - 10.0)
+    public int OverlayOpacity { get; set; } = 90; // Overlay background opacity (0-100%)
+    public int OverlayContentOpacity { get; set; } = 100; // Overlay content (icon/text) opacity (20-100%)
 }

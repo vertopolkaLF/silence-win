@@ -9,7 +9,7 @@ namespace silence_
     public partial class App : Application
     {
         private MainWindow? _window;
-        private OverlayWindow? _overlayWindow;
+        private LayeredOverlay? _overlayWindow;
         private MicrophoneService? _microphoneService;
         private KeyboardHookService? _keyboardHookService;
         private SettingsService? _settingsService;
@@ -18,6 +18,7 @@ namespace silence_
         private bool _startMinimized;
         private bool _isOverlayPositioning = false;
         private System.Timers.Timer? _previewTimer;
+        private System.Timers.Timer? _positioningTimer;
 
         public static App? Instance { get; private set; }
         public MicrophoneService MicrophoneService => _microphoneService!;
@@ -88,7 +89,7 @@ namespace silence_
         
         private void InitializeOverlay()
         {
-            _overlayWindow = new OverlayWindow();
+            _overlayWindow = new LayeredOverlay();
             
             // Set initial position and apply settings
             var settings = _settingsService?.Settings;
@@ -196,6 +197,14 @@ namespace silence_
             
             _isOverlayPositioning = true;
             _overlayWindow.StartPositioning();
+            
+            // Start timer to process drag
+            _positioningTimer?.Stop();
+            _positioningTimer?.Dispose();
+            _positioningTimer = new System.Timers.Timer(16); // ~60fps
+            _positioningTimer.Elapsed += (s, e) => _overlayWindow?.ProcessDrag();
+            _positioningTimer.AutoReset = true;
+            _positioningTimer.Start();
         }
         
         public void StopOverlayPositioning()
@@ -203,6 +212,12 @@ namespace silence_
             if (_overlayWindow == null) return;
             
             _isOverlayPositioning = false;
+            
+            // Stop positioning timer
+            _positioningTimer?.Stop();
+            _positioningTimer?.Dispose();
+            _positioningTimer = null;
+            
             _overlayWindow.StopPositioning();
             UpdateOverlayVisibility();
         }
@@ -304,7 +319,9 @@ namespace silence_
             _soundService?.Dispose();
             _previewTimer?.Stop();
             _previewTimer?.Dispose();
-            _overlayWindow?.Close();
+            _positioningTimer?.Stop();
+            _positioningTimer?.Dispose();
+            _overlayWindow?.Dispose();
             _window?.DisposeTrayIcon();
             _window?.Close();
             Environment.Exit(0);

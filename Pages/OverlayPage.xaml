@@ -124,6 +124,32 @@
                     <ComboBoxItem Content="Dark" Tag="Dark"/>
                     <ComboBoxItem Content="Light" Tag="Light"/>
                 </ComboBox>
+                
+                <!-- Background Opacity -->
+                <StackPanel Spacing="8" Margin="0,12,0,0">
+                    <TextBlock x:Name="OpacityLabel" Text="Background opacity: 90%"/>
+                    <Slider x:Name="OpacitySlider"
+                            Minimum="0"
+                            Maximum="100"
+                            StepFrequency="5"
+                            TickFrequency="10"
+                            TickPlacement="Outside"
+                            Value="90"
+                            ValueChanged="OpacitySlider_ValueChanged"/>
+                </StackPanel>
+                
+                <!-- Content Opacity -->
+                <StackPanel Spacing="8" Margin="0,8,0,0">
+                    <TextBlock x:Name="ContentOpacityLabel" Text="Content opacity: 100%"/>
+                    <Slider x:Name="ContentOpacitySlider"
+                            Minimum="20"
+                            Maximum="100"
+                            StepFrequency="5"
+                            TickFrequency="10"
+                            TickPlacement="Outside"
+                            Value="100"
+                            ValueChanged="ContentOpacitySlider_ValueChanged"/>
+                </StackPanel>
             </StackPanel>
         </StackPanel>
     </ScrollViewer>

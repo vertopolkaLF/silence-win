@@ -67,6 +67,13 @@ public sealed partial class OverlayPage : Page
                 break;
             }
         }
+        
+        // Set opacity sliders
+        OpacitySlider.Value = settings.OverlayOpacity;
+        OpacityLabel.Text = $"Background opacity: {settings.OverlayOpacity}%";
+        
+        ContentOpacitySlider.Value = settings.OverlayContentOpacity;
+        ContentOpacityLabel.Text = $"Content opacity: {settings.OverlayContentOpacity}%";
 
         UpdatePositionText(settings);
     }
@@ -312,6 +319,26 @@ public sealed partial class OverlayPage : Page
             App.Instance?.SettingsService.UpdateOverlayBackgroundStyle(style);
             App.Instance?.ApplyOverlaySettings();
         }
+    }
+    
+    private void OpacitySlider_ValueChanged(object sender, Microsoft.UI.Xaml.Controls.Primitives.RangeBaseValueChangedEventArgs e)
+    {
+        if (_isInitializing) return;
+        
+        var opacity = (int)e.NewValue;
+        OpacityLabel.Text = $"Background opacity: {opacity}%";
+        App.Instance?.SettingsService.UpdateOverlayOpacity(opacity);
+        App.Instance?.ApplyOverlaySettings();
+    }
+    
+    private void ContentOpacitySlider_ValueChanged(object sender, Microsoft.UI.Xaml.Controls.Primitives.RangeBaseValueChangedEventArgs e)
+    {
+        if (_isInitializing) return;
+        
+        var opacity = (int)e.NewValue;
+        ContentOpacityLabel.Text = $"Content opacity: {opacity}%";
+        App.Instance?.SettingsService.UpdateOverlayContentOpacity(opacity);
+        App.Instance?.ApplyOverlaySettings();
     }
 
     private void ScreenComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
