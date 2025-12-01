@@ -342,11 +342,14 @@ public sealed class LayeredOverlay : IDisposable
         }
         
         // Draw icon centered in its square area
-        // Different icon fonts have different metrics, so we need font-specific offsets
+        // Different icon fonts have different metrics, so we need font-specific horizontal offset
         // Segoe MDL2 Assets (Win10) has fucked up horizontal metrics compared to Segoe Fluent Icons (Win11)
         float horizontalOffset = _iconFontFamily == "Segoe MDL2 Assets" 
-            ? 3f * _dpiScale   // Win10 - icon shifted left, need to push right
-            : 1f;              // Win11 - seems fine
+            ? 1f * _dpiScale   // Win10 - slight push right
+            : 0f;                // Win11 - fine as is
+        
+        // Original vertical offset to compensate for font baseline bullshit
+        float verticalOffset = 2f * _dpiScale;
         
         using (var iconBrush = new SolidBrush(iconColor))
         using (var iconFormat = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center })
@@ -357,13 +360,13 @@ public sealed class LayeredOverlay : IDisposable
             {
                 // Icon is in a square area at the left side: padding + half icon size
                 iconCenterX = scaledPadding + scaledIconSize / 2f + horizontalOffset;
-                iconCenterY = _currentHeight / 2f;
+                iconCenterY = _currentHeight / 2f + verticalOffset;
             }
             else
             {
                 // Icon centered in the square overlay
                 iconCenterX = _currentWidth / 2f + horizontalOffset;
-                iconCenterY = _currentHeight / 2f;
+                iconCenterY = _currentHeight / 2f + verticalOffset;
             }
             
             g.DrawString(glyph, _iconFont, iconBrush, iconCenterX, iconCenterY, iconFormat);
