@@ -98,7 +98,7 @@
             
             <!-- Appearance Settings -->
             <StackPanel x:Name="AppearancePanel" Spacing="12">
-                <TextBlock Text="Appearance" FontWeight="SemiBold" FontSize="14"/>
+                <TextBlock Text="Appearance" FontWeight="SemiBold" FontSize="24"/>
                 
                 <!-- Show Text -->
                 <ToggleSwitch x:Name="ShowTextToggle"
@@ -150,6 +150,27 @@
                             Value="100"
                             ValueChanged="ContentOpacitySlider_ValueChanged"/>
                 </StackPanel>
+                
+                <!-- Border Radius -->
+                <StackPanel Spacing="8" Margin="0,8,0,0">
+                    <TextBlock x:Name="BorderRadiusLabel" Text="Border radius: 6px"/>
+                    <Slider x:Name="BorderRadiusSlider"
+                            Minimum="0"
+                            Maximum="24"
+                            StepFrequency="1"
+                            TickFrequency="4"
+                            TickPlacement="Outside"
+                            Value="6"
+                            ValueChanged="BorderRadiusSlider_ValueChanged"/>
+                </StackPanel>
+                
+                <!-- Show Border -->
+                <ToggleSwitch x:Name="ShowBorderToggle"
+                              Header="Overlay border"
+                              OffContent="No border"
+                              OnContent="Show border"
+                              Margin="0,8,0,0"
+                              Toggled="ShowBorderToggle_Toggled"/>
             </StackPanel>
         </StackPanel>
     </ScrollViewer>

@@ -230,6 +230,18 @@ public class SettingsService
         _settings.OverlayContentOpacity = Math.Clamp(opacity, 20, 100);
         SaveSettings();
     }
+    
+    public void UpdateOverlayBorderRadius(int radius)
+    {
+        _settings.OverlayBorderRadius = Math.Clamp(radius, 0, 24);
+        SaveSettings();
+    }
+    
+    public void UpdateOverlayShowBorder(bool show)
+    {
+        _settings.OverlayShowBorder = show;
+        SaveSettings();
+    }
 }
 
 public class AppSettings
@@ -263,4 +275,6 @@ public class AppSettings
     public double OverlayShowDuration { get; set; } = 2.0; // Duration in seconds for "AfterToggle" mode (0.1 - 10.0)
     public int OverlayOpacity { get; set; } = 90; // Overlay background opacity (0-100%)
     public int OverlayContentOpacity { get; set; } = 100; // Overlay content (icon/text) opacity (20-100%)
+    public int OverlayBorderRadius { get; set; } = 6; // Border radius in pixels (0-24)
+    public bool OverlayShowBorder { get; set; } = true; // Show Win11 style border
 }

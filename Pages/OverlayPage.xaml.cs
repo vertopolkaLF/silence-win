@@ -74,6 +74,13 @@ public sealed partial class OverlayPage : Page
         
         ContentOpacitySlider.Value = settings.OverlayContentOpacity;
         ContentOpacityLabel.Text = $"Content opacity: {settings.OverlayContentOpacity}%";
+        
+        // Set border radius
+        BorderRadiusSlider.Value = settings.OverlayBorderRadius;
+        BorderRadiusLabel.Text = $"Border radius: {settings.OverlayBorderRadius}px";
+        
+        // Set show border
+        ShowBorderToggle.IsOn = settings.OverlayShowBorder;
 
         UpdatePositionText(settings);
     }
@@ -338,6 +345,24 @@ public sealed partial class OverlayPage : Page
         var opacity = (int)e.NewValue;
         ContentOpacityLabel.Text = $"Content opacity: {opacity}%";
         App.Instance?.SettingsService.UpdateOverlayContentOpacity(opacity);
+        App.Instance?.ApplyOverlaySettings();
+    }
+    
+    private void BorderRadiusSlider_ValueChanged(object sender, Microsoft.UI.Xaml.Controls.Primitives.RangeBaseValueChangedEventArgs e)
+    {
+        if (_isInitializing) return;
+        
+        var radius = (int)e.NewValue;
+        BorderRadiusLabel.Text = $"Border radius: {radius}px";
+        App.Instance?.SettingsService.UpdateOverlayBorderRadius(radius);
+        App.Instance?.ApplyOverlaySettings();
+    }
+    
+    private void ShowBorderToggle_Toggled(object sender, RoutedEventArgs e)
+    {
+        if (_isInitializing) return;
+        
+        App.Instance?.SettingsService.UpdateOverlayShowBorder(ShowBorderToggle.IsOn);
         App.Instance?.ApplyOverlaySettings();
     }
 

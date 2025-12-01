@@ -21,6 +21,21 @@ public sealed class LayeredOverlay : IDisposable
     private bool _isDragging;
     private POINT _dragOffset;
     
+    // Overlay fade animation (show/hide whole window)
+    private System.Timers.Timer? _fadeTimer;
+    private byte _overlayAlpha = 255;
+    private byte _overlayTargetAlpha = 255;
+    private const int FadeAnimationDurationMs = 200;
+    private const int FadeAnimationIntervalMs = 16; // ~60fps
+    private readonly byte _overlayFadeStep = (byte)(255 / (FadeAnimationDurationMs / FadeAnimationIntervalMs));
+    
+    // Content crossfade animation (icon + text transition) - 2x faster since it's fade out + fade in
+    private byte _contentAlpha = 255;
+    private byte _contentTargetAlpha = 255;
+    private bool _pendingMuteStateChange;
+    private bool _pendingMuteState;
+    private readonly byte _contentFadeStep = (byte)(255 / (FadeAnimationDurationMs / FadeAnimationIntervalMs) * 2);
+    
     // Current state
     private bool _currentMuteState;
     private int _currentX;
@@ -59,6 +74,11 @@ public sealed class LayeredOverlay : IDisposable
     {
         RegisterWindowClass();
         CreateOverlayWindow();
+        
+        // Setup fade animation timer
+        _fadeTimer = new System.Timers.Timer(FadeAnimationIntervalMs);
+        _fadeTimer.Elapsed += OnFadeTimerTick;
+        _fadeTimer.AutoReset = true;
     }
     
     private void RegisterWindowClass()
@@ -158,8 +178,25 @@ public sealed class LayeredOverlay : IDisposable
     
     public void UpdateMuteState(bool isMuted)
     {
-        _currentMuteState = isMuted;
-        RenderOverlay();
+        if (_currentMuteState == isMuted && !_pendingMuteStateChange) return;
+        
+        // If overlay is not visible - set state instantly without animation
+        // So when overlay appears it shows fresh content right away
+        if (!_isVisible)
+        {
+            _currentMuteState = isMuted;
+            _pendingMuteStateChange = false;
+            _contentAlpha = 255;
+            _contentTargetAlpha = 255;
+            RenderOverlay();
+            return;
+        }
+        
+        // Start content crossfade animation
+        _pendingMuteState = isMuted;
+        _pendingMuteStateChange = true;
+        _contentTargetAlpha = 0; // Fade out current content first
+        StartFadeTimer();
     }
     
     public void ApplySettings()
@@ -178,13 +215,15 @@ public sealed class LayeredOverlay : IDisposable
         bool isDarkBackground = settings.OverlayBackgroundStyle == "Dark";
         bool isMonochrome = settings.OverlayIconStyle == "Monochrome";
         int bgOpacity = (int)(settings.OverlayOpacity * 255 / 100.0); // Convert 0-100 to 0-255
-        int contentOpacity = (int)(settings.OverlayContentOpacity * 255 / 100.0); // Convert 0-100 to 0-255
+        int baseContentOpacity = (int)(settings.OverlayContentOpacity * 255 / 100.0); // Convert 0-100 to 0-255
+        // Combine settings opacity with animation alpha for content crossfade
+        int contentOpacity = baseContentOpacity * _contentAlpha / 255;
         
         // DPI-scaled dimensions
         int scaledIconOnlySize = (int)(BaseIconOnlySize * _dpiScale);
         int scaledPadding = (int)(BasePadding * _dpiScale);
         int scaledGap = (int)(BaseIconTextGap * _dpiScale);
-        int scaledCornerRadius = (int)(6 * _dpiScale); // Always use rounded corners
+        int scaledCornerRadius = (int)(settings.OverlayBorderRadius * _dpiScale);
         
         // Measure icon size
         string glyph = _currentMuteState ? MicrophoneOffGlyph : MicrophoneGlyph;
@@ -240,8 +279,8 @@ public sealed class LayeredOverlay : IDisposable
         using var g = Graphics.FromImage(bitmap);
         
         g.SmoothingMode = SmoothingMode.AntiAlias;
-        // Use AntiAlias for text when content has transparency (ClearType doesn't work with alpha)
-        g.TextRenderingHint = contentOpacity < 255 
+        // Use AntiAlias for text when content has transparency or during animation (ClearType doesn't work with alpha)
+        g.TextRenderingHint = (contentOpacity < 255 || _contentAlpha < 255)
             ? TextRenderingHint.AntiAliasGridFit 
             : TextRenderingHint.ClearTypeGridFit;
         g.Clear(Color.Transparent);
@@ -257,7 +296,17 @@ public sealed class LayeredOverlay : IDisposable
             DrawRoundedRectangle(g, bgBrush, 0, 0, _currentWidth, _currentHeight, scaledCornerRadius);
         }
         
-        // Positioning mode border
+        // Win11 style border - subtle, semi-transparent
+        if (settings.OverlayShowBorder)
+        {
+            var borderColor = isDarkBackground 
+                ? Color.FromArgb(38, 255, 255, 255)  // White ~15% for dark bg
+                : Color.FromArgb(25, 0, 0, 0);       // Black ~10% for light bg
+            using var borderPen = new Pen(borderColor, 1);
+            DrawRoundedRectangleBorder(g, borderPen, 0, 0, _currentWidth - 1, _currentHeight - 1, scaledCornerRadius);
+        }
+        
+        // Positioning mode border (overrides win11 border)
         if (_isPositioning)
         {
             using var borderPen = new Pen(Color.FromArgb(255, 0, 120, 215), 2 * _dpiScale);
@@ -311,6 +360,12 @@ public sealed class LayeredOverlay : IDisposable
     
     private void DrawRoundedRectangle(Graphics g, Brush brush, int x, int y, int width, int height, int radius)
     {
+        if (radius <= 0)
+        {
+            g.FillRectangle(brush, x, y, width, height);
+            return;
+        }
+        
         using var path = new GraphicsPath();
         path.AddArc(x, y, radius * 2, radius * 2, 180, 90);
         path.AddArc(x + width - radius * 2, y, radius * 2, radius * 2, 270, 90);
@@ -322,6 +377,12 @@ public sealed class LayeredOverlay : IDisposable
     
     private void DrawRoundedRectangleBorder(Graphics g, Pen pen, int x, int y, int width, int height, int radius)
     {
+        if (radius <= 0)
+        {
+            g.DrawRectangle(pen, x, y, width, height);
+            return;
+        }
+        
         using var path = new GraphicsPath();
         path.AddArc(x, y, radius * 2, radius * 2, 180, 90);
         path.AddArc(x + width - radius * 2, y, radius * 2, radius * 2, 270, 90);
@@ -347,7 +408,7 @@ public sealed class LayeredOverlay : IDisposable
             {
                 BlendOp = AC_SRC_OVER,
                 BlendFlags = 0,
-                SourceConstantAlpha = 255,
+                SourceConstantAlpha = _overlayAlpha,
                 AlphaFormat = AC_SRC_ALPHA
             };
             
@@ -365,15 +426,92 @@ public sealed class LayeredOverlay : IDisposable
     public void ShowOverlay()
     {
         if (_hwnd == IntPtr.Zero) return;
-        ShowWindow(_hwnd, SW_SHOWNOACTIVATE);
+        
+        _overlayTargetAlpha = 255;
+        if (!_isVisible)
+        {
+            _overlayAlpha = 0;
+            ShowWindow(_hwnd, SW_SHOWNOACTIVATE);
+            RenderOverlay();
+        }
         _isVisible = true;
+        StartFadeTimer();
     }
     
     public void HideOverlay()
     {
         if (_hwnd == IntPtr.Zero) return;
-        ShowWindow(_hwnd, SW_HIDE);
-        _isVisible = false;
+        
+        _overlayTargetAlpha = 0;
+        StartFadeTimer();
+    }
+    
+    private void StartFadeTimer()
+    {
+        if (_fadeTimer != null && !_fadeTimer.Enabled)
+        {
+            _fadeTimer.Start();
+        }
+    }
+    
+    private void OnFadeTimerTick(object? sender, System.Timers.ElapsedEventArgs e)
+    {
+        // Animate overlay alpha (window visibility)
+        if (_overlayAlpha != _overlayTargetAlpha)
+        {
+            if (_overlayAlpha < _overlayTargetAlpha)
+            {
+                int newAlpha = _overlayAlpha + _overlayFadeStep;
+                _overlayAlpha = (byte)Math.Min(newAlpha, _overlayTargetAlpha);
+            }
+            else
+            {
+                int newAlpha = _overlayAlpha - _overlayFadeStep;
+                _overlayAlpha = (byte)Math.Max(newAlpha, _overlayTargetAlpha);
+            }
+        }
+        
+        // Animate content alpha (icon + text crossfade) - 2x faster
+        if (_contentAlpha != _contentTargetAlpha)
+        {
+            if (_contentAlpha < _contentTargetAlpha)
+            {
+                int newAlpha = _contentAlpha + _contentFadeStep;
+                _contentAlpha = (byte)Math.Min(newAlpha, _contentTargetAlpha);
+            }
+            else
+            {
+                int newAlpha = _contentAlpha - _contentFadeStep;
+                _contentAlpha = (byte)Math.Max(newAlpha, _contentTargetAlpha);
+            }
+        }
+        
+        // When content faded out completely, apply pending state and fade back in
+        if (_pendingMuteStateChange && _contentAlpha == 0)
+        {
+            _currentMuteState = _pendingMuteState;
+            _pendingMuteStateChange = false;
+            _contentTargetAlpha = 255; // Fade in new content
+        }
+        
+        // Re-render with current alpha values
+        RenderOverlay();
+        
+        // Check if all animations complete
+        bool stillAnimating = _overlayAlpha != _overlayTargetAlpha || 
+                              _contentAlpha != _contentTargetAlpha || 
+                              _pendingMuteStateChange;
+        
+        if (!stillAnimating)
+        {
+            _fadeTimer?.Stop();
+            
+            if (_overlayTargetAlpha == 0)
+            {
+                ShowWindow(_hwnd, SW_HIDE);
+                _isVisible = false;
+            }
+        }
     }
     
     public void MoveToPosition(double percentX, double percentY, string screenId)
@@ -576,6 +714,9 @@ public sealed class LayeredOverlay : IDisposable
     {
         if (_isDisposed) return;
         _isDisposed = true;
+        
+        _fadeTimer?.Stop();
+        _fadeTimer?.Dispose();
         
         _iconFont?.Dispose();
         _textFont?.Dispose();
