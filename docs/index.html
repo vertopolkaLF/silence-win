@@ -19,7 +19,7 @@
     <style>
         :root {
             --bg-primary: #0c0a0f;
-            --bg-secondary: #16121a;
+            --bg-secondary: #1d1624;
             --bg-card: #1d161f;
             --bg-card-hover: #2d253a;
             --text-primary: #f0f0f5;
@@ -73,9 +73,9 @@
             width: 200%;
             height: 200%;
             background:
-                radial-gradient(ellipse at 20% 20%, rgba(168, 85, 247, 0.08) 0%, transparent 50%),
-                radial-gradient(ellipse at 80% 80%, rgba(250, 154, 69, 0.06) 0%, transparent 50%),
-                radial-gradient(ellipse at 50% 50%, rgba(250, 154, 69, 0.03) 0%, transparent 70%);
+                radial-gradient(ellipse at 20% 20%, rgba(168, 85, 247, 0.1) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, rgba(139, 92, 246, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, rgba(192, 132, 252, 0.05) 0%, transparent 70%);
             animation: bgFloat 20s ease-in-out infinite;
         }
 
@@ -223,10 +223,6 @@
             line-height: 1.2;
             margin-bottom: 24px;
             padding: 0.1em 0;
-            background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
         }
 
         .hero h1 span {
@@ -599,7 +595,7 @@
         }
 
         footer a {
-            color: var(--accent-primary);
+            color: var(--accent-secondary);
             text-decoration: none;
         }
 
@@ -674,7 +670,6 @@
 
 <body>
     <div class="bg-gradient"></div>
-    <div class="noise"></div>
 
     <!-- Navigation -->
     <nav>
