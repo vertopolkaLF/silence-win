@@ -1,3 +1,66 @@
+# 🎤 silence! v1.4 — Overlay Overhaul
+
+> **Now it's actually good. No, seriously.**
+
+## ✨ What's New in v1.4
+
+### 🚀 Complete Overlay Rewrite
+
+- **Pure Win32 Layered Window** — Rewrote the entire overlay from scratch using Win32 API. No more WinUI/XAML bullshit. It's faster, lighter, and actually works properly.
+
+- **True Click-Through** — The overlay is now completely invisible to your cursor. No more accidental clicks, no more window stealing focus. It's there, but Windows doesn't even know it exists.
+
+- **Smooth Animations** — Added buttery smooth fade-in/fade-out animations. Overlay appears and disappears like magic. State transitions use crossfade animation so you never see jarring icon swaps.
+
+### 🎨 Appearance Customization
+
+- **Show Text Option** — Toggle between icon-only or icon with "Microphone is muted/unmuted" text. Your choice, your desktop.
+
+- **Icon Styles** — Choose between colored (red/green) or monochrome icons. Match your aesthetic, or don't. We don't judge.
+
+- **Background Styles** — Dark or light background. Because sometimes you want it to blend in, sometimes you want it to stand out.
+
+- **Opacity Controls** — Two separate sliders:
+  - **Background opacity** (0-100%) — Control how transparent the background is
+  - **Content opacity** (20-100%) — Control icon and text visibility independently
+
+- **Border Radius** — Adjust corner rounding from 0px (sharp) to 24px (pill-shaped). Make it yours.
+
+- **Border Toggle** — Show or hide the Windows 11 style border. Because borders are optional, not mandatory.
+
+### ⏱️ New Visibility Mode
+
+- **Show After Toggle** — Overlay appears briefly after you mute/unmute, then disappears automatically. Perfect for quick confirmation without permanent screen clutter.
+
+- **Customizable Duration** — Set how long the overlay stays visible (0.1 to 10 seconds). Want a quick flash? 0.5s. Want to stare at it? 10s. Your call.
+
+### 🎯 Improvements
+
+- **Better Performance** — Win32 Layered Window is way more efficient than WinUI. Lower CPU usage, smoother animations, no stuttering.
+
+- **DPI Scaling** — Proper DPI awareness. Overlay looks crisp on any display, whether it's 96 DPI or 300 DPI.
+
+- **Anchor-Based Repositioning** — When switching between icon-only and icon+text, overlay stays anchored correctly. No more jumping around.
+
+- **Preview Button** — Test your overlay settings before committing. See what it looks like without toggling mute.
+
+## 🔧 Technical Changes
+
+- Complete rewrite: `LayeredOverlay` class using `UpdateLayeredWindow` API
+- Per-pixel alpha transparency with proper compositing
+- Custom fade animation system with 60fps updates
+- Content crossfade for smooth state transitions
+- DPI-aware rendering with proper font scaling
+- Anchor-based positioning algorithm for dynamic width changes
+
+---
+
+<p align="center">
+  <b>It's faster. It's smoother. It's better.</b>
+</p>
+
+---
+
 # 🎤 silence! v1.3 — Visual Overlay
 
 > **Now you can see your mute status. Everywhere. All the time.**
