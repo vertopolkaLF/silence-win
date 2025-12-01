@@ -194,6 +194,7 @@ public class UpdateService : IDisposable
             var startInfo = new ProcessStartInfo
             {
                 FileName = installerPath,
+                Arguments = "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /CLOSEAPPLICATIONS",
                 UseShellExecute = true
             };
             
